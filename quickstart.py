@@ -34,16 +34,18 @@ def main():
         # Save the credentials for the next run
         with open('token.json', 'w') as token:
             token.write(creds.to_json())
-
+def commitHours(creds):
     try:
         service = build('calendar', 'v3', credentials=creds)
 
         # Call the Calendar API
-        now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-        print('Getting the upcoming 10 events')
-        events_result = service.events().list(calendarId='primary', timeMin=now,
-                                              maxResults=10, singleEvents=True,
-                                              orderBy='startTime').execute()
+        now = datetime.datetime.today() # 'Z' indicates UTC time
+        timeStart = str(today) + "T10:00:00Z"
+        timeEnd = str(today) + "T23:59:59Z"
+        print('Getting the tracked hours')
+        events_result = service.events().list(calendarId='fdfd294a77a2d8bfede4afb49a46eaf4e68905cd6a79872674232f0428549fc8@group.calendar.google.com', timeMin=timeStart, timeMax=timeEnd,
+                                              singleEvents=True,
+                                              orderBy='startTime', timeZone="Asia/Kolkata").execute()
         events = events_result.get('items', [])
 
         if not events:
