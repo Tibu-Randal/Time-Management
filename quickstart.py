@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import datetime
 import os.path
+import sqlite3
 
 from dateutil import parser
 
@@ -71,6 +72,16 @@ def commitHours(creds):
             total_duration += duration
             print(f"{event['summary']}, duration: {duration}")
         print(f"Total coding time: {total_duration}")
+
+        conn = sqlite3.connect(f'hours.db')
+        cur = conn.cursor()
+        print("Opened Database successfully")
+        date = datetime.date.today()
+
+        formatted_total_duration = total_duration.seconds/60/60
+        coding_hours = (date, 'CODING', formatted_total_duration)
+        cur.execute("INSERT INTO hours VALUES(?, ?, ?);", coding_hours)
+        conn.commit()
 
 
     except HttpError as error:
