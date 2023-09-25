@@ -3,6 +3,8 @@ from __future__ import print_function
 import datetime
 import os.path
 
+from dateutil import parser
+
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -10,7 +12,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 
 def main():
@@ -34,26 +36,42 @@ def main():
         # Save the credentials for the next run
         with open('token.json', 'w') as token:
             token.write(creds.to_json())
+    commitHours(creds)
 
+def commitHours(creds):
     try:
         service = build('calendar', 'v3', credentials=creds)
 
         # Call the Calendar API
-        now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-        print('Getting the upcoming 10 events')
-        events_result = service.events().list(calendarId='primary', timeMin=now,
-                                              maxResults=10, singleEvents=True,
-                                              orderBy='startTime').execute()
+        today= datetime.date.today()
+        timeStart = str(today) + "T00:00:00Z"
+        timeEnd = str(today) + "T23:59:59Z" # 'Z' indicates UTC time
+        print("Getting today's coding hours")
+        events_result = service.events().list(calendarId='fdfd294a77a2d8bfede4afb49a46eaf4e68905cd6a79872674232f0428549fc8@group.calendar.google.com', timeMin=timeStart, timeMax=timeEnd, singleEvents=True, orderBy='startTime', timeZone='Asia/Kolkata').execute()
         events = events_result.get('items', [])
 
         if not events:
             print('No upcoming events found.')
             return
-
-        # Prints the start and name of the next 10 events
+        
+        total_duration = datetime.timedelta(
+        seconds = 0,
+        minutes = 0,
+        hours = 0,
+        )
+        print("Total Hours")
         for event in events:
             start = event['start'].get('dateTime', event['start'].get('date'))
-            print(start, event['summary'])
+            end = event['end'].get('dateTime', event['end'].get('date'))
+
+            start_formatted = parser.isoparse(start) # changing the start time to datetime format
+            end_formatted = parser.isoparse(end) # changing the end time to datetime format
+            duration = end_formatted - start_formatted
+
+            total_duration += duration
+            print(f"{event['summary']}, duration: {duration}")
+        print(f"Total coding time: {total_duration}")
+
 
     except HttpError as error:
         print('An error occurred: %s' % error)
